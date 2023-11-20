@@ -2,7 +2,7 @@
   "name": "firebot-script-elevenlabs-tts",
   "scriptOutputName": "elevenlabs-tts",
   "version": "1.0.0",
-  "description": "A starter Firebot custom script",
+  "description": "A custom script that allows ElevenLabs TTS to be used in Firebot",
   "main": "",
   "scripts": {
     "build": "webpack",

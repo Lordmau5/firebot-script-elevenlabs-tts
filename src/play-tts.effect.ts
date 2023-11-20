@@ -2,9 +2,9 @@ import ElevenLabs from './eleven-labs-api';
 import { v4 as uuid } from 'uuid';
 import * as fs from 'fs-extra';
 
-import {Effects} from "@crowbartools/firebot-custom-scripts-types/types/effects";
+import {Effects} from '@crowbartools/firebot-custom-scripts-types/types/effects';
 import template from './play-tts.html'
-import {modules, settings, parameters} from "./main";
+import {modules, settings, parameters} from './main';
 import EffectType = Effects.EffectType;
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -33,12 +33,12 @@ interface EffectModel {
 
 const effect: EffectType<EffectModel> = {
     definition: {
-        id: "lordmau5:tts:elevenlabs-tts",
-        name: "Play ElevenLabs TTS",
-        description: "Play a TTS message using ElevenLabs",
-        icon: "fad fa-microphone-alt",
+        id: 'lordmau5:tts:elevenlabs-tts',
+        name: 'Play ElevenLabs TTS',
+        description: 'Play a TTS message using ElevenLabs',
+        icon: 'fad fa-microphone-alt',
         // @ts-ignore
-        categories: ["fun", "integrations"]
+        categories: ['fun', 'integrations']
     },
     optionsTemplate: template,
     optionsController: ($scope, utilityService: any, backendCommunicator: any, $q: any, $timeout: any) => {
@@ -87,8 +87,8 @@ const effect: EffectType<EffectModel> = {
 
         const voice = new ElevenLabs(
             {
-                apiKey:  parameters.api_key,    // Your API key from Elevenlabs
-                voiceId: effect.voice_id,   // A Voice ID from Elevenlabs
+                apiKey:  parameters.api_key,
+                voiceId: effect.voice_id,
             }
         );
 
@@ -102,24 +102,20 @@ const effect: EffectType<EffectModel> = {
 
             mp3Path = modules.path.join(ELEVENLABS_TMP_DIR, `${uuid()}.mp3`);
         } catch (err) {
-            modules.logger.error('Unable to prep folder', err);
+            modules.logger.error('Unable to prepare temp folder', err);
             return false;
         }
 
         try {
-            const response = await voice.textToSpeech({
-                // Required Parameters
-                fileName:           mp3Path,
-                textInput:          effect.text,                    // The text you wish to convert to speech
-            
-                // Optional Parameters
-                stability:          effect.stability,                            // The stability for the converted speech
-                similarity:         effect.similarity,                           // The similarity boost for the converted speech
-                style:              effect.style,                            // The style exaggeration for the converted speech
-                speakerBoost:       effect.speaker_boost,                            // The speaker boost for the converted speech
-                useTurboModel:      effect.use_turbo_model,                           // Whether to use the turbo model or not
+            await voice.textToSpeech({
+                fileName:       mp3Path,
+                textInput:      effect.text,
+                stability:      effect.stability,
+                similarity:     effect.similarity,
+                style:          effect.style,
+                speakerBoost:   effect.speaker_boost,
+                useTurboModel:  effect.use_turbo_model,
             });
-            modules.logger.info('TTS Response', JSON.stringify(response));
         }
         catch (err) {
             modules.logger.error('Unable to save TTS', err);
@@ -129,7 +125,7 @@ const effect: EffectType<EffectModel> = {
         const data: {
             filepath: string;
             volume: number;
-            audioOutputDevice: EffectModel["audioOutputDevice"];
+            audioOutputDevice: EffectModel['audioOutputDevice'];
             overlayInstance: string;
             resourceToken?: string
         } = {
@@ -139,37 +135,37 @@ const effect: EffectType<EffectModel> = {
             overlayInstance: scope.effect.overlayInstance,
         }
 
-        if (data.audioOutputDevice == null || data.audioOutputDevice.label === "App Default") {
+        if (data.audioOutputDevice == null || data.audioOutputDevice.label === 'App Default') {
             data.audioOutputDevice = settings.getAudioOutputDevice();
-            if (data.audioOutputDevice.deviceId == "overlay") {
+            if (data.audioOutputDevice.deviceId == 'overlay') {
                 data.overlayInstance = null;
             }
         }
 
-        const duration = await modules.frontendCommunicator.fireEventAsync("getSoundDuration", {
-            path: "file://" + data.filepath
+        const duration = await modules.frontendCommunicator.fireEventAsync('getSoundDuration', {
+            path: 'file://' + data.filepath
         });
 
         // @ts-ignore
         const durationMs = (Math.round(duration) || 0) * 1000;
 
         // Generate token if going to overlay, otherwise send to gui.
-        if (scope.effect.audioOutputDevice.deviceId === "overlay") {
+        if (scope.effect.audioOutputDevice.deviceId === 'overlay') {
             // @ts-ignore
             data.resourceToken = modules.resourceTokenManager.storeResourcePath(
                 data.filepath,
                 duration
             );
             // send event to the overlay
-            modules.httpServer.sendToOverlay("sound", data);
+            modules.httpServer.sendToOverlay('sound', data);
         } else {
             // Send data back to media.js in the gui.
-            renderWindow.webContents.send("playsound", data);
+            renderWindow.webContents.send('playsound', data);
         }
 
         try {
             const waitPromise = wait(durationMs).then(async function () {
-                // await fs.unlink(data.filepath);
+                await fs.unlink(data.filepath);
             });
 
             if (effect.waitForSound) {

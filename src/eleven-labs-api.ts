@@ -1,23 +1,21 @@
-// import fetch from 'node-fetch';
-// import axios from "axios";
 import * as fs from 'fs-extra';
 import {modules} from "./main";
 
-const elevenLabsAPIV1 = "https://api.elevenlabs.io/v1";
+const elevenLabsAPIV1 = 'https://api.elevenlabs.io/v1';
 
 export default class ElevenLabs {
     apiKey: string;
     voiceId: string;
 
     constructor(options = {
-        apiKey: "",
-        voiceId: ""
+        apiKey: '',
+        voiceId: ''
     }) {
-        this.apiKey = options.apiKey ? options.apiKey : "";
-        this.voiceId = options.voiceId ? options.voiceId : "pNInz6obpgDQGcFmaJgB"; // Default voice 'Adam'
+        this.apiKey = options.apiKey ? options.apiKey : '';
+        this.voiceId = options.voiceId ? options.voiceId : 'pNInz6obpgDQGcFmaJgB'; // Default voice 'Adam'
 
         if (this.apiKey === "") {
-            console.log("ERR: Missing API key");
+            modules.logger.error('Missing API key');
             return;
         }
     }
@@ -43,10 +41,10 @@ export default class ElevenLabs {
     }) {
         try {
             if (!fileName) {
-                modules.logger.error("ERR: Missing parameter {fileName}");
+                modules.logger.error('Missing parameter {fileName}');
                 return;
             } else if (!textInput) {
-                modules.logger.error("ERR: Missing parameter {textInput}");
+                modules.logger.error('Missing parameter {textInput}');
                 return;
             }
     
@@ -59,7 +57,7 @@ export default class ElevenLabs {
             const options = {
                 url: voiceURL,
                 headers: {
-                    Accept: 'audio/mpeg',
+                    'Accept': 'audio/mpeg',
                     'xi-api-key': this.apiKey,
                     'Content-Type': 'application/json',
                 },
@@ -74,8 +72,6 @@ export default class ElevenLabs {
                     model_id: useTurboModel ? 'eleven_turbo_v2' : 'eleven_multilingual_v2',
                 }),
             };
-
-            modules.logger.info('Options', options);
 
             const writeStream = fs.createWriteStream(fileName);
 
@@ -92,11 +88,11 @@ export default class ElevenLabs {
 
             return new Promise((resolve, reject) => {
                 const responseJson = {
-                    status: "ok",
+                    status: 'ok',
                     fileName: fileName
                 };
                 writeStream.on('finish', () => resolve(responseJson));
-    
+
                 writeStream.on('error', reject);
             });
         } catch (err) {
