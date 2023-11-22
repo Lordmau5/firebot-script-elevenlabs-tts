@@ -1,28 +1,18 @@
-import ElevenLabs from './eleven-labs-api';
-import { v4 as uuid } from 'uuid';
 import * as fs from 'fs-extra';
 
-import {Effects} from '@crowbartools/firebot-custom-scripts-types/types/effects';
+import { Effects } from '@crowbartools/firebot-custom-scripts-types/types/effects';
 import template from './play-tts.html'
-import {modules, settings, parameters} from './main';
+import { modules, settings, parameters, tts_promises } from './main';
 import EffectType = Effects.EffectType;
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 interface EffectModel {
-    voice_id: string;
-
-    text: string;
-
-    stability: number,
-    similarity: number,
-    style: number,
-    speaker_boost: boolean,
-    use_turbo_model: boolean,
+    tts_token: string;
 
     maxSoundLength: number;
     waitForSound: boolean;
-    
+
     volume: number;
     audioOutputDevice: {
         deviceId: string;
@@ -33,7 +23,7 @@ interface EffectModel {
 
 const effect: EffectType<EffectModel> = {
     definition: {
-        id: 'lordmau5:tts:elevenlabs-tts',
+        id: 'lordmau5:tts:elevenlabs-play-tts',
         name: 'Play ElevenLabs TTS',
         description: 'Play a TTS message using ElevenLabs',
         icon: 'fad fa-microphone-alt',
@@ -45,29 +35,13 @@ const effect: EffectType<EffectModel> = {
         if ($scope.effect.volume == null) {
             $scope.effect.volume = 5;
         }
-
-        if ($scope.effect.stability == null) {
-            $scope.effect.stability = 0.5;
-        }
-
-        if ($scope.effect.similarity == null) {
-            $scope.effect.similarity = 0.75;
-        }
-
-        if ($scope.effect.style == null) {
-            $scope.effect.style = 0;
-        }
     },
     // @ts-ignore
     optionsValidator: (effect) => {
         const errors: string[] = [];
 
-        if (!effect.voice_id?.length) {
-            errors.push('Please provide a voice ID.');
-        }
-
-        if (!effect.text?.length) {
-            errors.push('Please provide text to synthesize.');
+        if (!effect.tts_token?.length) {
+            errors.push('Please provide a TTS token.');
         }
 
         return errors;
@@ -75,50 +49,24 @@ const effect: EffectType<EffectModel> = {
     onTriggerEvent: async (scope) => {
         const effect = scope.effect;
 
-        if (!parameters.api_key.length || !effect.voice_id.length) {
-            modules.logger.error('No API key or Voice ID specified.');
+        const tts_token = effect.tts_token;
+
+        if (!tts_token.length) {
+            modules.logger.error('No TTS token specified.');
             return false;
         }
 
-        if (!effect.text.length) {
-            modules.logger.error('No text specified.');
+        if (!tts_promises.has(tts_token)) {
+            modules.logger.error('No TTS with this TTS token was requested.');
             return false;
         }
 
-        const voice = new ElevenLabs(
-            {
-                apiKey:  parameters.api_key,
-                voiceId: effect.voice_id,
-            }
-        );
+        const promise_result = await tts_promises.get(tts_token);
 
-        let mp3Path = undefined;
-        try {
-            const ELEVENLABS_TMP_DIR = modules.path.join(SCRIPTS_DIR, '..', 'tmp', 'elevenlabs');
+        tts_promises.delete(tts_token);
 
-            if (!(await fs.pathExists(ELEVENLABS_TMP_DIR))) {
-                await fs.mkdirp(ELEVENLABS_TMP_DIR);
-            }
-
-            mp3Path = modules.path.join(ELEVENLABS_TMP_DIR, `${uuid()}.mp3`);
-        } catch (err) {
-            modules.logger.error('Unable to prepare temp folder', err);
-            return false;
-        }
-
-        try {
-            await voice.textToSpeech({
-                fileName:       mp3Path,
-                textInput:      effect.text,
-                stability:      effect.stability,
-                similarity:     effect.similarity,
-                style:          effect.style,
-                speakerBoost:   effect.speaker_boost,
-                useTurboModel:  effect.use_turbo_model,
-            });
-        }
-        catch (err) {
-            modules.logger.error('Unable to save TTS', err);
+        if (promise_result.status !== 'ok') {
+            modules.logger.error('TTS request failed.');
             return false;
         }
 
@@ -129,7 +77,7 @@ const effect: EffectType<EffectModel> = {
             overlayInstance: string;
             resourceToken?: string
         } = {
-            filepath: mp3Path,
+            filepath: promise_result.fileName,
             volume: scope.effect.volume,
             audioOutputDevice: scope.effect.audioOutputDevice,
             overlayInstance: scope.effect.overlayInstance,
@@ -165,7 +113,7 @@ const effect: EffectType<EffectModel> = {
 
         try {
             const waitPromise = wait(durationMs).then(async function () {
-                await fs.unlink(data.filepath);
+                // await fs.unlink(data.filepath);
             });
 
             if (effect.waitForSound) {

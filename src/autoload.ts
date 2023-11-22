@@ -1,5 +1,5 @@
-import {EventSource} from "@crowbartools/firebot-custom-scripts-types/types/modules/event-manager";
-import {ScriptModules} from "@crowbartools/firebot-custom-scripts-types";
+import { EventSource } from "@crowbartools/firebot-custom-scripts-types/types/modules/event-manager";
+import { ScriptModules } from "@crowbartools/firebot-custom-scripts-types";
 
 export function autoload(modules: ScriptModules, eventSource: EventSource) {
     // System Commands

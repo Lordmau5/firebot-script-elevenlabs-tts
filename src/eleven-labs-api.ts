@@ -1,7 +1,41 @@
 import * as fs from 'fs-extra';
-import {modules} from "./main";
+import { modules } from "./main";
 
 const elevenLabsAPIV1 = 'https://api.elevenlabs.io/v1';
+
+interface ElevenLabsSample {
+    sample_id: string;
+    file_name: string;
+    mime_type: string;
+    size_bytes: number;
+    hash: string;
+}
+
+interface ElevenLabsVoice {
+    available_for_tiers: string[];
+    category: string;
+    description: string;
+    fine_tuning: {
+        fine_tuning_requested: boolean;
+        finetuning_state: 'not_started' | 'is_fine_tuning' | 'fine_tuned';
+        is_allowed_to_fine_tune: boolean;
+        language: string | null;
+        manual_verification: object;
+        manual_verification_requested: boolean;
+        slice_ids: string[] | null;
+        verification_attempts: object[] | null;
+        verification_attempts_count: number;
+        verification_failures: string[]
+    };
+    high_quality_base_model_ids: string[];
+    labels: object;
+    name: string;
+    preview_url: string;
+    samples: ElevenLabsSample[];
+    settings: object | null;
+    sharing: object | null;
+    voice_id: string,
+}
 
 export default class ElevenLabs {
     apiKey: string;
@@ -21,14 +55,14 @@ export default class ElevenLabs {
     }
 
     async textToSpeech({
-        voiceId,
+        voiceId = this.voiceId,
         fileName,
         textInput,
-        stability,
-        similarity,
-        useTurboModel,
-        style,
-        speakerBoost
+        stability = 0.5,
+        similarity = 0.75,
+        useTurboModel = false,
+        style = 0,
+        speakerBoost = false
     }: {
         voiceId?: string,
         fileName: string,
@@ -47,15 +81,10 @@ export default class ElevenLabs {
                 modules.logger.error('Missing parameter {textInput}');
                 return;
             }
-    
-            const voiceIdValue = voiceId ? voiceId : this.voiceId;
-            const voiceURL = `${elevenLabsAPIV1}/text-to-speech/${voiceIdValue}`;
-            const stabilityValue = stability ? stability : 0.5;
-            const similarityBoostValue = similarity ? similarity : 0.75;
-            const styleValue = style ? style : 0;
 
+            const ttsUrl = `${elevenLabsAPIV1}/text-to-speech/${voiceId}`;
             const options = {
-                url: voiceURL,
+                url: ttsUrl,
                 headers: {
                     'Accept': 'audio/mpeg',
                     'xi-api-key': this.apiKey,
@@ -64,9 +93,9 @@ export default class ElevenLabs {
                 body: JSON.stringify({
                     text: textInput,
                     voice_settings: {
-                        stability: stabilityValue,
-                        similarity_boost: similarityBoostValue,
-                        style: styleValue,
+                        stability,
+                        similarity_boost: similarity,
+                        style,
                         use_speaker_boost: speakerBoost,
                     },
                     model_id: useTurboModel ? 'eleven_turbo_v2' : 'eleven_multilingual_v2',
@@ -94,6 +123,42 @@ export default class ElevenLabs {
                 writeStream.on('finish', () => resolve(responseJson));
 
                 writeStream.on('error', reject);
+            });
+        } catch (err) {
+            modules.logger.error(err);
+            throw err;
+        }
+    }
+
+    async fetchVoices({
+        filterCloned = false
+    }: {
+        filterCloned?: boolean
+    }) {
+        try {
+            const voicesURL = `${elevenLabsAPIV1}/voices`;
+            const options = {
+                url: voicesURL,
+                headers: {
+                    'Accept': 'application/json',
+                    'xi-api-key': this.apiKey,
+                },
+            };
+
+            return new Promise((resolve, reject) => {
+                // @ts-ignore
+                modules.request.get(options, (err, res, body) => {
+                    if (err) {
+                        modules.logger.error(err);
+                        reject(err);
+                        return;
+                    }
+
+                    const { voices: all_voices }: { voices: ElevenLabsVoice[] } = JSON.parse(body);
+                    const voices = filterCloned ? all_voices.filter(voice => voice.category === 'cloned') : all_voices;
+
+                    resolve(voices);
+                });
             });
         } catch (err) {
             modules.logger.error(err);

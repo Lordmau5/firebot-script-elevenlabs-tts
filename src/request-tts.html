@@ -1,0 +1,82 @@
+<div>
+    <eos-container header="Voice ID">
+        <p>
+            To get a voice ID from a voice, please go to the
+            <a href="https://elevenlabs.io/docs/api-reference/get-voices">ElevenLabs API documentation</a>
+            and get the voice ID for the voice you want to use.
+        </p>
+        <p>
+            If left empty it will take the voice ID from the default settings.
+        </p>
+        <input ng-model="effect.voice_id" type="text" class="form-control" placeholder="Enter Voice ID">
+    </eos-container>
+
+    <eos-container header="Text" pad-top="true">
+        <textarea ng-model="effect.text" class="form-control" name="text" placeholder="Enter text to synthesize"
+            rows="4" cols="40" replace-variables menu-position="under"></textarea>
+    </eos-container>
+
+    <eos-container header="Stability" pad-top="true">
+        <p>
+            <strong>Lower (More variable):</strong> Increasing variability can make speech more expressive
+            with output varying between re-generations. It can also lead to instabilities.
+        </p>
+        <p>
+            <strong>Higher (More stable):</strong> Increasing stability will make the voice more consistent
+            between re-generations, but it can also make it sounds a bit monotone.
+            On longer text fragments we recommend lowering this value.
+        </p>
+        <rzslider rz-slider-model="effect.stability"
+            rz-slider-options="{floor: 0, ceil: 1, step: 0.05, precision: 3, hideLimitLabels: true, showSelectionBar: true}">
+        </rzslider>
+    </eos-container>
+
+    <eos-container header="Similarity" pad-top="true">
+        <p>
+            <strong>Lower:</strong> Low values are recommended if background artifacts are present in generated speech.
+        </p>
+        <p>
+            <strong>Higher:</strong> High enhancement boosts overall voice clarity and target speaker similarity.
+            Very high values can cause artifacts, so adjusting this setting to find
+            the optimal value is encouraged.
+        </p>
+        <rzslider rz-slider-model="effect.similarity"
+            rz-slider-options="{floor: 0, ceil: 1, step: 0.05, precision: 3, hideLimitLabels: true, showSelectionBar: true}">
+        </rzslider>
+    </eos-container>
+
+    <eos-container header="Style" pad-top="true">
+        <p>
+            High values are recommended if the style of the speech should be exaggerated
+            compared to the uploaded audio. Higher values can lead to more instability
+            in the generated speech. Setting this to 0.0 will greatly increase generation
+            speed and is the default setting.
+        </p>
+        <rzslider rz-slider-model="effect.style"
+            rz-slider-options="{floor: 0, ceil: 1, step: 0.05, precision: 3, hideLimitLabels: true, showSelectionBar: true}">
+        </rzslider>
+    </eos-container>
+
+    <eos-container header="Use Turbo Model" pad-top="true">
+        <p>
+            Uses ElevenLabs' Turbo v2 model instead of the default Multilingual v2.
+            <br>
+            <strong>Note: Turbo only supports English.</strong>
+        </p>
+        <label class="control-fb control--checkbox"> Use Turbo Model
+            <input type="checkbox" ng-model="effect.use_turbo_model">
+            <div class="control__indicator"></div>
+        </label>
+    </eos-container>
+
+    <eos-container header="Speaker Boost" pad-top="true">
+        <p>
+            Boost the similarity of the synthesized speech
+            and the voice at the cost of some generation speed.
+        </p>
+        <label class="control-fb control--checkbox"> Use Speaker Boost
+            <input type="checkbox" ng-model="effect.speaker_boost">
+            <div class="control__indicator"></div>
+        </label>
+    </eos-container>
+</div>
