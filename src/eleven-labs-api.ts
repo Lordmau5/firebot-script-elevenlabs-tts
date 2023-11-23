@@ -11,10 +11,15 @@ interface ElevenLabsSample {
     hash: string;
 }
 
-interface ElevenLabsVoice {
-    available_for_tiers: string[];
+export interface ElevenLabsVoiceBase {
     category: string;
     description: string;
+    name: string;
+    voice_id: string;
+};
+
+interface ElevenLabsVoice extends ElevenLabsVoiceBase {
+    available_for_tiers: string[];
     fine_tuning: {
         fine_tuning_requested: boolean;
         finetuning_state: 'not_started' | 'is_fine_tuning' | 'fine_tuned';
@@ -29,24 +34,19 @@ interface ElevenLabsVoice {
     };
     high_quality_base_model_ids: string[];
     labels: object;
-    name: string;
     preview_url: string;
     samples: ElevenLabsSample[];
     settings: object | null;
     sharing: object | null;
-    voice_id: string,
 }
 
 export default class ElevenLabs {
     apiKey: string;
     voiceId: string;
 
-    constructor(options = {
-        apiKey: '',
-        voiceId: ''
-    }) {
-        this.apiKey = options.apiKey ? options.apiKey : '';
-        this.voiceId = options.voiceId ? options.voiceId : 'pNInz6obpgDQGcFmaJgB'; // Default voice 'Adam'
+    constructor(apiKey: string = '', voiceId?: string) {
+        this.apiKey = apiKey;
+        this.voiceId = voiceId ? voiceId : 'pNInz6obpgDQGcFmaJgB'; // Default voice 'Adam'
 
         if (this.apiKey === "") {
             modules.logger.error('Missing API key');
@@ -134,7 +134,7 @@ export default class ElevenLabs {
         filterCloned = false
     }: {
         filterCloned?: boolean
-    }) {
+    }): Promise<ElevenLabsVoice[]> {
         try {
             const voicesURL = `${elevenLabsAPIV1}/voices`;
             const options = {
@@ -155,7 +155,24 @@ export default class ElevenLabs {
                     }
 
                     const { voices: all_voices }: { voices: ElevenLabsVoice[] } = JSON.parse(body);
-                    const voices = filterCloned ? all_voices.filter(voice => voice.category === 'cloned') : all_voices;
+                    const voices = filterCloned
+                        ? all_voices.filter(voice => voice.category === 'cloned')
+                        : all_voices;
+                    
+                    voices.sort((a, b) => {
+                        // Cloned voices at the top
+                        if (a.category === 'cloned' && b.category === 'cloned') {
+                            return a.name.localeCompare(b.name);
+                        }
+                        if (a.category === 'cloned') {
+                            return -1;
+                        }
+                        if (b.category === 'cloned') {
+                            return 1;
+                        }
+
+                        return a.name.localeCompare(b.name)
+                    });
 
                     resolve(voices);
                 });

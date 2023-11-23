@@ -2,10 +2,10 @@ import { Firebot, ScriptModules } from '@crowbartools/firebot-custom-scripts-typ
 import { autoload } from './autoload';
 import { EventSource } from '@crowbartools/firebot-custom-scripts-types/types/modules/event-manager';
 import { FirebotSettings } from '@crowbartools/firebot-custom-scripts-types/types/settings';
+import ElevenLabs, { ElevenLabsVoiceBase } from './eleven-labs-api';
 
 interface Params {
   api_key: string;
-  default_voice: string;
 }
 
 const script: Firebot.CustomScript<Params> = {
@@ -14,7 +14,7 @@ const script: Firebot.CustomScript<Params> = {
       name: 'ElevenLabs TTS',
       description: 'A custom script that allows ElevenLabs TTS to be used in Firebot',
       author: 'Lordmau5',
-      version: '1.1',
+      version: '1.2',
       firebotVersion: '5',
     };
   },
@@ -25,14 +25,7 @@ const script: Firebot.CustomScript<Params> = {
         default: '',
         description: 'Your ElevenLabs API key',
         showBottomHr: true,
-      },
-      default_voice: {
-        type: 'string',
-        default: '',
-        description: 'The default voice ID to use',
-        secondaryDescription: 'To get a list of available voice IDs visit the ElevenLabs API documentation: https://api.elevenlabs.io/docs/voices',
-        showBottomHr: true,
-      },
+      }
     };
   },
   parametersUpdated: async (params) => {
@@ -48,6 +41,26 @@ const script: Firebot.CustomScript<Params> = {
     modules = runRequest.modules;
     settings = runRequest.firebot.settings;
     parameters = runRequest.parameters;
+
+    modules.frontendCommunicator.onAsync('elevenlabs-get-voices', async () => {
+      const response = {
+          error: false,
+          voices: [] as ElevenLabsVoiceBase[]
+      };
+  
+      try {
+          const voice = new ElevenLabs(parameters.api_key);
+  
+          const voices = await voice.fetchVoices({ filterCloned: false });
+  
+          response.voices = voices;
+      } catch (err) {
+          modules.logger.error('Unable to fetch voices', err);
+          response.error = true;
+      }
+
+      return response;
+    });
   }
 };
 

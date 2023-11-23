@@ -12,16 +12,18 @@ interface EffectModel {
 
     maxSoundLength: number;
     waitForSound: boolean;
+}
 
+interface OverlayData {
+    overlayInstance: string;
     volume: number;
     audioOutputDevice: {
         deviceId: string;
         label: string;
     };
-    overlayInstance: string;
 }
 
-const effect: EffectType<EffectModel> = {
+const effect: EffectType<EffectModel & OverlayData> = {
     definition: {
         id: 'lordmau5:tts:elevenlabs-play-tts',
         name: 'Play ElevenLabs TTS',
@@ -73,7 +75,7 @@ const effect: EffectType<EffectModel> = {
         const data: {
             filepath: string;
             volume: number;
-            audioOutputDevice: EffectModel['audioOutputDevice'];
+            audioOutputDevice: OverlayData['audioOutputDevice'];
             overlayInstance: string;
             resourceToken?: string
         } = {

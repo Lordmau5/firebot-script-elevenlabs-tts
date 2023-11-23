@@ -4,13 +4,12 @@ import * as fs from 'fs-extra';
 
 import { Effects } from '@crowbartools/firebot-custom-scripts-types/types/effects';
 import template from './request-tts.html'
-import { modules, settings, parameters, tts_promises } from './main';
+import { modules, parameters, tts_promises } from './main';
 import EffectType = Effects.EffectType;
-
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import { ElevenLabsVoiceBase } from './eleven-labs-api';
 
 interface EffectModel {
-    voice_id: string;
+    voice: ElevenLabsVoiceBase;
 
     text: string;
 
@@ -50,6 +49,22 @@ const effect: EffectType<EffectModel> = {
         if ($scope.effect.style == null) {
             $scope.effect.style = 0;
         }
+
+        $scope.fetchError = false;
+        $q.when(backendCommunicator.fireEventAsync('elevenlabs-get-voices'))
+            .then(({ error, voices }: { error: boolean, voices:ElevenLabsVoiceBase[] }) => {
+                $scope.isFetchingVoices = false;
+
+                if (error || !voices.length) {
+                    return;
+                }
+
+                if ($scope.effect.voice == null) {
+                    $scope.effect.voice = voices[0];
+                }
+
+                $scope.voices = voices;
+            });
     },
     // @ts-ignore
     optionsValidator: (effect) => {
@@ -64,7 +79,7 @@ const effect: EffectType<EffectModel> = {
     onTriggerEvent: async (scope) => {
         const effect = scope.effect;
 
-        const voiceId = effect.voice_id || parameters.default_voice;
+        const voiceId = effect.voice.voice_id;
 
         if (!parameters.api_key.length || !voiceId.length) {
             modules.logger.error('No API key or Voice ID specified.');
@@ -76,12 +91,7 @@ const effect: EffectType<EffectModel> = {
             return false;
         }
 
-        const voice = new ElevenLabs(
-            {
-                apiKey: parameters.api_key,
-                voiceId,
-            }
-        );
+        const voice = new ElevenLabs(parameters.api_key, voiceId);
 
         const ttsToken = uuid();
 

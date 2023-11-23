@@ -1,14 +1,16 @@
 <div>
-    <eos-container header="Voice ID">
-        <p>
-            To get a voice ID from a voice, please go to the
-            <a href="https://elevenlabs.io/docs/api-reference/get-voices">ElevenLabs API documentation</a>
-            and get the voice ID for the voice you want to use.
-        </p>
-        <p>
-            If left empty it will take the voice ID from the default settings.
-        </p>
-        <input ng-model="effect.voice_id" type="text" class="form-control" placeholder="Enter Voice ID">
+    <eos-container header="Voice" class="setting-padtop">
+        <p>These are the available voices your provided API key has access to.</p>
+        <ui-select ng-model="effect.voice">
+            <ui-select-match placeholder="">{{$select.selected.name}}</ui-select-match>
+            <ui-select-choices repeat="voice in voices | filter: $select.search">
+                <div>
+                    <strong ng-bind-html="voice.name | highlight: $select.search"></strong>
+                    <em ng-bind-html="'(' + voice.category + ')' | highlight: $select.search"></em>
+                </div>
+                <small ng-bind-html="voice.description | highlight: $select.search"></small>
+            </ui-select-choices>
+        </ui-select>
     </eos-container>
 
     <eos-container header="Text" pad-top="true">
