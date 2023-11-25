@@ -10,7 +10,7 @@
     "copy": "node ./scripts/copy-build.js",
     "test": "jest"
   },
-  "author": "dennisrijsdijk",
+  "author": "Lordmau5",
   "license": "GNU3",
   "devDependencies": {
     "@crowbartools/firebot-custom-scripts-types": "^5.53.2-6",
