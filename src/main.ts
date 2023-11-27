@@ -14,7 +14,7 @@ const script: Firebot.CustomScript<Params> = {
       name: 'ElevenLabs TTS',
       description: 'A custom script that allows ElevenLabs TTS to be used in Firebot',
       author: 'Lordmau5',
-      version: '1.2',
+      version: '1.2.1',
       firebotVersion: '5',
     };
   },

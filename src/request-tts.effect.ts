@@ -16,8 +16,10 @@ interface EffectModel {
     stability: number;
     similarity: number;
     style: number;
-    speaker_boost: boolean;
-    use_turbo_model: boolean;
+    useTurboModel: boolean;
+    speakerBoost: boolean;
+
+    waitForGeneration: boolean;
 }
 
 const effect: EffectType<EffectModel> = {
@@ -117,11 +119,15 @@ const effect: EffectType<EffectModel> = {
                 stability: effect.stability,
                 similarity: effect.similarity,
                 style: effect.style,
-                speakerBoost: effect.speaker_boost,
-                useTurboModel: effect.use_turbo_model,
+                speakerBoost: effect.speakerBoost,
+                useTurboModel: effect.useTurboModel,
             });
 
             tts_promises.set(ttsToken, tts);
+
+            if (effect.waitForGeneration) {
+                await tts;
+            }
 
             return {
                 success: true,

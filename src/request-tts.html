@@ -18,6 +18,18 @@
             rows="4" cols="40" replace-variables menu-position="under"></textarea>
     </eos-container>
 
+    <eos-container header="Use Turbo Model" pad-top="true">
+        <p>
+            Uses ElevenLabs' Turbo v2 model instead of the default Multilingual v2.
+            <br>
+            <strong>Note: Turbo only supports English.</strong>
+        </p>
+        <label class="control-fb control--checkbox"> Use Turbo Model
+            <input type="checkbox" ng-model="effect.useTurboModel">
+            <div class="control__indicator"></div>
+        </label>
+    </eos-container>
+
     <eos-container header="Stability" pad-top="true">
         <p>
             <strong>Lower (More variable):</strong> Increasing variability can make speech more expressive
@@ -47,7 +59,7 @@
         </rzslider>
     </eos-container>
 
-    <eos-container header="Style" pad-top="true">
+    <eos-container ng-if="!effect.useTurboModel" header="Style Exaggeration" pad-top="true">
         <p>
             High values are recommended if the style of the speech should be exaggerated
             compared to the uploaded audio. Higher values can lead to more instability
@@ -59,25 +71,23 @@
         </rzslider>
     </eos-container>
 
-    <eos-container header="Use Turbo Model" pad-top="true">
-        <p>
-            Uses ElevenLabs' Turbo v2 model instead of the default Multilingual v2.
-            <br>
-            <strong>Note: Turbo only supports English.</strong>
-        </p>
-        <label class="control-fb control--checkbox"> Use Turbo Model
-            <input type="checkbox" ng-model="effect.use_turbo_model">
-            <div class="control__indicator"></div>
-        </label>
-    </eos-container>
-
-    <eos-container header="Speaker Boost" pad-top="true">
+    <eos-container ng-if="!effect.useTurboModel" header="Speaker Boost" pad-top="true">
         <p>
             Boost the similarity of the synthesized speech
             and the voice at the cost of some generation speed.
         </p>
         <label class="control-fb control--checkbox"> Use Speaker Boost
-            <input type="checkbox" ng-model="effect.speaker_boost">
+            <input type="checkbox" ng-model="effect.speakerBoost">
+            <div class="control__indicator"></div>
+        </label>
+    </eos-container>
+
+    <eos-container header="Wait For Generation" pad-top="true">
+        <p>
+            Waits for the generation to finish before continuing with other effects.
+        </p>
+        <label class="control-fb control--checkbox"> Wait For Generation
+            <input type="checkbox" ng-model="effect.waitForGeneration">
             <div class="control__indicator"></div>
         </label>
     </eos-container>
