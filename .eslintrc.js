@@ -1,7 +1,16 @@
 /* globals module */
 module.exports = {
 	root: true,
-	plugins: [ '@stylistic' ],
+	plugins: [
+		'@stylistic',
+		'@typescript-eslint',
+		'html'
+	],
+	extends: [
+		'eslint:recommended',
+		'plugin:@typescript-eslint/recommended'
+	],
+	parser: '@typescript-eslint/parser',
 	parserOptions: {
 		ecmaVersion: 'latest'
 	},
@@ -174,6 +183,10 @@ module.exports = {
 			'error',
 			'always'
 		],
-		'@stylistic/wrap-regex': 'error'
+		'@stylistic/wrap-regex': 'error',
+
+		'@typescript-eslint/no-unused-vars': 'off',
+		'@typescript-eslint/no-explicit-any': 'off',
+		'@typescript-eslint/ban-ts-comment': 'off'
 	}
 };
