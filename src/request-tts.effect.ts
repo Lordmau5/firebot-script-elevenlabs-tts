@@ -1,4 +1,6 @@
-import ElevenLabs from './eleven-labs-api';
+import ElevenLabs, {
+	ElevenLabsSubscriptionData
+} from './eleven-labs-api';
 import {
 	v4 as uuid
 } from 'uuid';
@@ -61,13 +63,10 @@ const effect: EffectType<EffectModel> = {
 			$scope.effect.style = 0;
 		}
 
-		$scope.fetchError = false;
 		$q.when(backendCommunicator.fireEventAsync('elevenlabs-get-voices'))
 			.then(({
 				error, voices
-			}: { error: boolean, voices:ElevenLabsVoiceBase[] }) => {
-				$scope.isFetchingVoices = false;
-
+			}: { error: boolean, voices: ElevenLabsVoiceBase[] }) => {
 				if (error || !voices.length) {
 					return;
 				}
@@ -77,6 +76,20 @@ const effect: EffectType<EffectModel> = {
 				}
 
 				$scope.voices = voices;
+			});
+
+		$scope.fetchingSubscriptionData = true;
+		$q.when(backendCommunicator.fireEventAsync('elevenlabs-get-subscription-data'))
+			.then(({
+				error, subscriptionData
+			}: { error: boolean, subscriptionData: ElevenLabsSubscriptionData }) => {
+				$scope.fetchingSubscriptionData = false;
+
+				if (error || !subscriptionData) {
+					return;
+				}
+
+				$scope.subscriptionData = subscriptionData;
 			});
 	},
 	optionsValidator: effect => {
@@ -105,7 +118,8 @@ const effect: EffectType<EffectModel> = {
 			return false;
 		}
 
-		const voice = new ElevenLabs(parameters.api_key, voiceId);
+		const api = ElevenLabs.instance;
+		api.setup(parameters.api_key);
 
 		const ttsToken = uuid();
 
@@ -126,7 +140,7 @@ const effect: EffectType<EffectModel> = {
 		}
 
 		try {
-			const tts = voice.textToSpeech({
+			const tts = api.textToSpeech({
 				voiceId,
 				fileName: mp3Path,
 				textInput: effect.text,

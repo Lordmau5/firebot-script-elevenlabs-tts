@@ -11,11 +11,13 @@ import {
 	FirebotSettings
 } from '@crowbartools/firebot-custom-scripts-types/types/settings';
 import ElevenLabs, {
-	ElevenLabsVoiceBase
+	ElevenLabsVoiceBase,
+	ElevenLabsSubscriptionData
 } from './eleven-labs-api';
 
 interface Params {
 	api_key: string;
+	show_premade_voices: boolean;
 }
 
 const script: Firebot.CustomScript<Params> = {
@@ -35,6 +37,11 @@ const script: Firebot.CustomScript<Params> = {
 				default: '',
 				description: 'Your ElevenLabs API key',
 				showBottomHr: true
+			},
+			show_premade_voices: {
+				type: 'boolean',
+				default: true,
+				description: 'Enable to show premade voices provided by ElevenLabs'
 			}
 		};
 	},
@@ -59,13 +66,42 @@ const script: Firebot.CustomScript<Params> = {
 			};
 
 			try {
-				const voice = new ElevenLabs(parameters.api_key);
+				const {
+					api_key, show_premade_voices
+				} = parameters;
 
-				const voices = await voice.fetchVoices({
-					filterCloned: false
+				const api = ElevenLabs.instance;
+				api.setup(api_key);
+
+				const voices = await api.fetchVoices({
+					show_premade_voices
 				});
 
 				response.voices = voices;
+			}
+			catch (err) {
+				modules.logger.error('Unable to fetch voices', err);
+				response.error = true;
+			}
+
+			return response;
+		});
+
+		modules.frontendCommunicator.onAsync('elevenlabs-get-subscription-data', async() => {
+			const response = {
+				error: false,
+				subscriptionData: null as ElevenLabsSubscriptionData
+			};
+
+			try {
+				const {
+					api_key
+				} = parameters;
+
+				const api = ElevenLabs.instance;
+				api.setup(api_key);
+
+				response.subscriptionData = await api.fetchSubscriptionData();
 			}
 			catch (err) {
 				modules.logger.error('Unable to fetch voices', err);

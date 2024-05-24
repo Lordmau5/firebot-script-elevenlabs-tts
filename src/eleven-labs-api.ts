@@ -5,6 +5,35 @@ import {
 
 const elevenLabsAPIV1 = 'https://api.elevenlabs.io/v1';
 
+export interface ElevenLabsSubscriptionData {
+	tier: string;
+	character_count: number;
+	character_count_formatted: string;
+	character_limit: number;
+	character_limit_formatted: string;
+	character_usage_percentage: number;
+	can_extend_character_limit: boolean;
+	allowed_to_extend_character_limit: boolean;
+	next_character_count_reset_unix: number;
+	next_reset_date_formatted: string;
+	voice_limit: number;
+	max_voice_add_edits: number;
+	voice_add_edit_counter: number;
+	professional_voice_limit: number;
+	can_extend_voice_limit: boolean;
+	can_use_instant_voice_cloning: boolean;
+	can_use_professional_voice_cloning: boolean;
+	currency: string;
+	status: string;
+	billing_period: string;
+	character_refresh_period: string;
+	next_invoice: {
+		amount_due_cents: number;
+		next_payment_attempt_unix: number;
+	};
+	has_open_invoices: boolean;
+}
+
 interface ElevenLabsSample {
 	sample_id: string;
 	file_name: string;
@@ -43,13 +72,22 @@ interface ElevenLabsVoice extends ElevenLabsVoiceBase {
 }
 
 export default class ElevenLabs {
-	apiKey: string;
+	private static _instance: ElevenLabs;
 
-	voiceId: string;
+	private apiKey: string;
 
-	constructor(apiKey: string = '', voiceId?: string) {
+	private constructor() {}
+
+	public static get instance() {
+		if (!ElevenLabs._instance) {
+			ElevenLabs._instance = new ElevenLabs();
+		}
+
+		return ElevenLabs._instance;
+	}
+
+	public setup(apiKey: string = '') {
 		this.apiKey = apiKey;
-		this.voiceId = voiceId ? voiceId : 'pNInz6obpgDQGcFmaJgB'; // Default voice 'Adam'
 
 		if (this.apiKey === '') {
 			modules.logger.error('Missing API key');
@@ -58,8 +96,8 @@ export default class ElevenLabs {
 		}
 	}
 
-	async textToSpeech({
-		voiceId = this.voiceId,
+	public async textToSpeech({
+		voiceId = 'pNInz6obpgDQGcFmaJgB', // Default voice 'Adam'
 		fileName,
 		textInput,
 		stability = 0.5,
@@ -139,10 +177,44 @@ export default class ElevenLabs {
 		}
 	}
 
-	async fetchVoices({
-		filterCloned = false
+	public sortVoices(voices: ElevenLabsVoice[]) {
+		const categoryOrder = [
+			'cloned',
+			'professional',
+			'generated',
+			'premade'
+		];
+
+		return voices.sort((a, b) => {
+			const categoryA = a.category.toLowerCase();
+			const categoryB = b.category.toLowerCase();
+
+			const indexA = categoryOrder.indexOf(categoryA);
+			const indexB = categoryOrder.indexOf(categoryB);
+
+			if ((indexA === -1 && indexB === -1) || indexA === indexB) {
+				// If neither category is in the order array, sort alphabetically
+				return a.name.localeCompare(b.name);
+			}
+			else if (indexA === -1) {
+				// If categoryA is not in the order array, put it after categoryB
+				return 1;
+			}
+			else if (indexB === -1) {
+				// If categoryB is not in the order array, put it after categoryA
+				return -1;
+			}
+			else {
+				// Sort based on the order in the categoryOrder array
+				return indexA - indexB;
+			}
+		});
+	}
+
+	public async fetchVoices({
+		show_premade_voices = true
 	}: {
-		filterCloned?: boolean
+		show_premade_voices?: boolean
 	}): Promise<ElevenLabsVoice[]> {
 		try {
 			const voicesURL = `${ elevenLabsAPIV1 }/voices`;
@@ -167,26 +239,61 @@ export default class ElevenLabs {
 					const {
 						voices: all_voices
 					}: { voices: ElevenLabsVoice[] } = JSON.parse(body);
-					const voices = filterCloned
-						? all_voices.filter(voice => voice.category === 'cloned')
-						: all_voices;
+					const voices = show_premade_voices
+						? all_voices
+						: all_voices.filter(voice => voice.category !== 'premade');
 
-					voices.sort((a, b) => {
-						// Cloned voices at the top
-						if (a.category === 'cloned' && b.category === 'cloned') {
-							return a.name.localeCompare(b.name);
-						}
-						if (a.category === 'cloned') {
-							return -1;
-						}
-						if (b.category === 'cloned') {
-							return 1;
-						}
-
-						return a.name.localeCompare(b.name);
-					});
+					this.sortVoices(voices);
 
 					resolve(voices);
+				});
+			});
+		}
+		catch (err) {
+			modules.logger.error(err);
+			throw err;
+		}
+	}
+
+	public formatNumber(num: number) {
+		return num.toLocaleString(undefined, {
+			maximumFractionDigits: 0
+		});
+	}
+
+	public async fetchSubscriptionData(): Promise<ElevenLabsSubscriptionData> {
+		try {
+			const subscriptionInfoURL = `${ elevenLabsAPIV1 }/user/subscription`;
+			const options = {
+				url: subscriptionInfoURL,
+				headers: {
+					Accept: 'application/json',
+					'xi-api-key': this.apiKey
+				}
+			};
+
+			return new Promise((resolve, reject) => {
+				// @ts-ignore
+				modules.request.get(options, (err, res, body) => {
+					if (err) {
+						modules.logger.error(err);
+						reject(err);
+
+						return;
+					}
+
+					const subData: ElevenLabsSubscriptionData = JSON.parse(body);
+
+					subData.character_count_formatted = this.formatNumber(subData.character_count);
+					subData.character_limit_formatted = this.formatNumber(subData.character_limit);
+					subData.character_usage_percentage = Math.floor(
+						(subData.character_count / subData.character_limit) * 100
+					);
+					subData.next_reset_date_formatted = new Date(
+						subData.next_character_count_reset_unix * 1000
+					).toLocaleString();
+
+					resolve(subData);
 				});
 			});
 		}
