@@ -143,7 +143,7 @@ export default class ElevenLabs {
 						style,
 						use_speaker_boost: speakerBoost
 					},
-					model_id: useTurboModel ? 'eleven_turbo_v2' : 'eleven_multilingual_v2'
+					model_id: useTurboModel ? 'eleven_turbo_v2_5' : 'eleven_multilingual_v2'
 				})
 			};
 
