@@ -17,7 +17,7 @@
 		"@stylistic/eslint-plugin": "^1.5.4",
 		"@types/fs-extra": "^11.0.4",
 		"@types/jest": "^29.5.11",
-		"@types/node": "^18.18.2",
+		"@types/node": "^20.14.0",
 		"@types/uuid": "^9.0.7",
 		"@types/webpack-env": "^1.18.1",
 		"@typescript-eslint/eslint-plugin": "^6.19.0",
@@ -37,7 +37,7 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"volta": {
-		"node": "18.18.2",
-		"npm": "10.2.4"
+		"node": "20.14.0",
+		"npm": "10.8.1"
 	}
 }
