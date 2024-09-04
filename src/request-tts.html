@@ -1,17 +1,36 @@
+<style>
+	ul.sub-data {
+		list-style: none;
+		display: table;
+		padding-left: 0;
+	}
+
+	ul.sub-data li {
+		display: table-row;
+	}
+
+	ul.sub-data li b {
+		display: table-cell;
+		padding-right: 1em;
+	}
+</style>
+
 <eos-container header="Subscription Info" class="setting-padtop">
 	<p>
 	<div ng-if="fetchingSubscriptionData === true">
 		<strong><em>Fetching subscription info...</em></strong>
 	</div>
 	<div ng-if="fetchingSubscriptionData === false">
-		<strong>Tier:</strong> {{subscriptionData.tier}}
-		<br>
-		<strong>Character usage:</strong>
-		{{subscriptionData.character_count_formatted}} / {{subscriptionData.character_limit_formatted}}
-		(~{{subscriptionData.character_usage_percentage}}%)
-		<br>
-		<strong>Reset date:</strong>
-		{{subscriptionData.next_reset_date_formatted}}
+		<ul class="sub-data">
+			<li><b>Tier:</b>
+				{{subscriptionData.tier}}</li>
+			<li><b>Credits used:</b>{{subscriptionData.character_count_formatted}} /
+				{{subscriptionData.character_limit_formatted}}
+				<strong>(~{{subscriptionData.character_usage_percentage}}%)</strong>
+			</li>
+			<li><b>Reset date:</b>
+				{{subscriptionData.next_reset_date_formatted}}</li>
+		</ul>
 	</div>
 	</p>
 </eos-container>
@@ -37,9 +56,10 @@
 
 <eos-container header="Use Turbo Model" pad-top="true">
 	<p>
-		Uses ElevenLabs' Turbo v2 model instead of the default Multilingual v2.
+		Uses ElevenLabs' Turbo v2.5 model instead of the default Multilingual v2.
 		<br>
-		<strong>Note: Turbo only supports English.</strong>
+		As an added bonus: The credits use is <strong>halved</strong> for Turbo, meaning 1 letter counts as 0.5 credits,
+		instead of 1 credit.
 	</p>
 	<label class="control-fb control--checkbox"> Use Turbo Model
 		<input type="checkbox" ng-model="effect.useTurboModel">
