@@ -9,8 +9,8 @@
 4. Click on the `scripts folder` link in the popup and place the `elevenlabs-tts.js` inside
 5. Click the blue reload button next to the `Pick one` dropdown to refresh the available scripts
 6. Select `elevenlabs-tts.js` in the dropdown and put your API key in the textbox  
-    You can find your API key by heading to the [ElevenLabs website](https://elevenlabs.io), clicking your icon in the top right,  
-    then click `Profile` and it should bring up a popup with your e-mail address and the API key.
+    You can find your API key by heading to the [ElevenLabs website](https://elevenlabs.io), clicking on `My Account` in the bottom left,  
+    then clicking `API Keys` and creating a new key.
 7. Click `Save` - You might have to restart Firebot for the script to load.
 
 ### How to use
