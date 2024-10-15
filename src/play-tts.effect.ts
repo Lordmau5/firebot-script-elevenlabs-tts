@@ -100,9 +100,6 @@ const effect: EffectType<EffectModel & OverlayData> = {
 
 		if (data.audioOutputDevice == null || data.audioOutputDevice.label === 'App Default') {
 			data.audioOutputDevice = settings.getAudioOutputDevice();
-			if (data.audioOutputDevice.deviceId == 'overlay') {
-				data.overlayInstance = null;
-			}
 		}
 
 		const duration = await modules.frontendCommunicator.fireEventAsync('getSoundDuration', {
@@ -112,7 +109,7 @@ const effect: EffectType<EffectModel & OverlayData> = {
 		const durationMs = (Math.round(duration) || 0) * 1000;
 
 		// Generate token if going to overlay, otherwise send to gui.
-		if (scope.effect.audioOutputDevice.deviceId === 'overlay') {
+		if (data.audioOutputDevice.deviceId === 'overlay') {
 			data.resourceToken = modules.resourceTokenManager.storeResourcePath(
 				data.filepath,
 				duration
