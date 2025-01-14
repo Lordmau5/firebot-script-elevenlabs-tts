@@ -1,6 +1,7 @@
 import * as fs from 'fs-extra';
 import {
-	modules
+	modules,
+	parameters
 } from './main';
 import { pipeline } from 'stream/promises';
 
@@ -72,12 +73,33 @@ interface ElevenLabsVoice extends ElevenLabsVoiceBase {
 	sharing: object | null;
 }
 
+export interface Model {
+	id: string;
+	name: string;
+	is_default?: boolean;
+}
+
+export const Models = [
+	{
+		id: 'eleven_multilingual_v2',
+		name: 'Multilingual v2',
+	},
+	{
+		id: 'eleven_flash_v2_5',
+		name: 'Flash v2.5',
+	},
+	{
+		id: 'eleven_turbo_v2_5',
+		name: 'Turbo v2.5 (Legacy)',
+	},
+] as Model[];
+
 export default class ElevenLabs {
 	private static _instance: ElevenLabs;
 
 	private apiKey: string;
 
-	private constructor() {}
+	private constructor() { }
 
 	public static get instance() {
 		if (!ElevenLabs._instance) {
@@ -97,13 +119,27 @@ export default class ElevenLabs {
 		}
 	}
 
+	public static getModelByName(name: string): Model {
+		for (const model of Models) {
+			if (model.name === name) {
+				return model;
+			}
+		}
+
+		return Models[0];
+	}
+
+	public static getDefaultModel(): Model {
+		return this.getModelByName(parameters.default_model);
+	}
+
 	public async textToSpeech({
 		voiceId = 'pNInz6obpgDQGcFmaJgB', // Default voice 'Adam'
 		fileName,
 		textInput,
 		stability = 0.5,
 		similarity = 0.75,
-		useTurboModel = false,
+		model = ElevenLabs.getDefaultModel(),
 		style = 0,
 		speakerBoost = false
 	}: {
@@ -112,7 +148,7 @@ export default class ElevenLabs {
 		textInput: string,
 		stability?: number,
 		similarity?: number,
-		useTurboModel?: boolean,
+		model?: Model,
 		style?: number,
 		speakerBoost?: boolean
 	}) {
@@ -127,7 +163,7 @@ export default class ElevenLabs {
 			return;
 		}
 
-		const ttsUrl = `${ elevenLabsAPIV1 }/text-to-speech/${ voiceId }`;
+		const ttsUrl = `${elevenLabsAPIV1}/text-to-speech/${voiceId}`;
 		const options = {
 			method: 'POST',
 			headers: {
@@ -143,7 +179,7 @@ export default class ElevenLabs {
 					style,
 					use_speaker_boost: speakerBoost
 				},
-				model_id: useTurboModel ? 'eleven_turbo_v2_5' : 'eleven_multilingual_v2'
+				model_id: model.id
 			})
 		};
 
@@ -203,7 +239,7 @@ export default class ElevenLabs {
 	}: {
 		show_premade_voices?: boolean
 	}): Promise<ElevenLabsVoice[]> {
-		const voicesURL = `${ elevenLabsAPIV1 }/voices`;
+		const voicesURL = `${elevenLabsAPIV1}/voices`;
 		const options = {
 			method: 'GET',
 			headers: {
@@ -239,7 +275,7 @@ export default class ElevenLabs {
 	}
 
 	public async fetchSubscriptionData(): Promise<ElevenLabsSubscriptionData> {
-		const subscriptionInfoURL = `${ elevenLabsAPIV1 }/user/subscription`;
+		const subscriptionInfoURL = `${elevenLabsAPIV1}/user/subscription`;
 		const options = {
 			method: 'GET',
 			headers: {

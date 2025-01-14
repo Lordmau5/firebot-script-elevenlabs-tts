@@ -12,12 +12,14 @@ import {
 } from '@crowbartools/firebot-custom-scripts-types/types/settings';
 import ElevenLabs, {
 	ElevenLabsVoiceBase,
-	ElevenLabsSubscriptionData
+	ElevenLabsSubscriptionData,
+	Models
 } from './eleven-labs-api';
 
 interface Params {
 	api_key: string;
 	show_premade_voices: boolean;
+	default_model: string;
 }
 
 const script: Firebot.CustomScript<Params> = {
@@ -33,15 +35,22 @@ const script: Firebot.CustomScript<Params> = {
 	getDefaultParameters: () => {
 		return {
 			api_key: {
-				type: 'string',
+				type: 'password',
 				default: '',
-				description: 'Your ElevenLabs API key',
+				title: 'Your ElevenLabs API key',
 				showBottomHr: true
 			},
 			show_premade_voices: {
 				type: 'boolean',
 				default: true,
-				description: 'Enable to show premade voices provided by ElevenLabs'
+				title: 'Enable to show premade voices provided by ElevenLabs'
+			},
+			default_model: {
+				type: 'enum',
+				title: 'Select the default model',
+				default: Models[0].id,
+				options: Models.map(m => m.name),
+				description: 'The default model to use for the Request TTS effect'
 			}
 		};
 	},
@@ -59,7 +68,22 @@ const script: Firebot.CustomScript<Params> = {
 		settings = runRequest.firebot.settings;
 		parameters = runRequest.parameters;
 
-		modules.frontendCommunicator.onAsync('elevenlabs-get-voices', async() => {
+		modules.frontendCommunicator.on('elevenlabs-get-models', () => {
+			const models = [...Models];
+
+			const default_model = ElevenLabs.getDefaultModel();
+			models.unshift({
+				name: `Default`,
+				id: default_model.id,
+				is_default: true
+			});
+
+			return models;
+		});
+
+		modules.frontendCommunicator.on('elevenlabs-get-default-model-name', () => ElevenLabs.getDefaultModel().name);
+
+		modules.frontendCommunicator.onAsync('elevenlabs-get-voices', async () => {
 			const response = {
 				error: false,
 				voices: [] as ElevenLabsVoiceBase[]
@@ -87,7 +111,7 @@ const script: Firebot.CustomScript<Params> = {
 			return response;
 		});
 
-		modules.frontendCommunicator.onAsync('elevenlabs-get-subscription-data', async() => {
+		modules.frontendCommunicator.onAsync('elevenlabs-get-subscription-data', async () => {
 			const response = {
 				error: false,
 				subscriptionData: null as ElevenLabsSubscriptionData

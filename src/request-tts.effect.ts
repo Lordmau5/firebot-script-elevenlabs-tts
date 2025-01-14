@@ -1,5 +1,6 @@
 import ElevenLabs, {
-	ElevenLabsSubscriptionData
+	ElevenLabsSubscriptionData,
+	Model
 } from './eleven-labs-api';
 import {
 	v4 as uuid
@@ -26,7 +27,7 @@ interface EffectModel {
 	stability: number;
 	similarity: number;
 	style: number;
-	useTurboModel: boolean;
+	model: Model;
 	speakerBoost: boolean;
 
 	waitForGeneration: boolean;
@@ -42,12 +43,11 @@ const effect: EffectType<EffectModel> = {
 			'fun',
 			'integrations'
 		],
-		// @ts-ignore
-		outputs: [ {
+		outputs: [{
 			label: 'TTS Token',
 			description: 'The TTS token to use for the play effect',
 			defaultName: 'ttsToken'
-		} ]
+		}]
 	},
 	optionsTemplate: template,
 	optionsController: ($scope, utilityService: any, backendCommunicator: any, $q: any, $timeout: any) => {
@@ -62,6 +62,15 @@ const effect: EffectType<EffectModel> = {
 		if ($scope.effect.style == null) {
 			$scope.effect.style = 0;
 		}
+
+		const models = backendCommunicator.fireEventSync('elevenlabs-get-models');
+		$scope.models = models;
+
+		if ($scope.effect.model == null) {
+			$scope.effect.model = models[0];
+		}
+
+		$scope.default_model = backendCommunicator.fireEventSync('elevenlabs-get-default-model-name');
 
 		$q.when(backendCommunicator.fireEventAsync('elevenlabs-get-voices'))
 			.then(({
@@ -105,6 +114,10 @@ const effect: EffectType<EffectModel> = {
 		const effect = scope.effect;
 
 		const voiceId = effect.voice.voice_id;
+		let model: Model = effect.model;
+		if (!model?.id || model.is_default) {
+			model = ElevenLabs.getDefaultModel();
+		}
 
 		if (!parameters.api_key.length || !voiceId.length) {
 			modules.logger.error('No API key or Voice ID specified.');
@@ -131,7 +144,7 @@ const effect: EffectType<EffectModel> = {
 				await fs.mkdirp(ELEVENLABS_TMP_DIR);
 			}
 
-			mp3Path = modules.path.join(ELEVENLABS_TMP_DIR, `${ ttsToken }.mp3`);
+			mp3Path = modules.path.join(ELEVENLABS_TMP_DIR, `${ttsToken}.mp3`);
 		}
 		catch (err) {
 			modules.logger.error('Unable to prepare temp folder', err);
@@ -148,7 +161,7 @@ const effect: EffectType<EffectModel> = {
 				similarity: effect.similarity,
 				style: effect.style,
 				speakerBoost: effect.speakerBoost,
-				useTurboModel: effect.useTurboModel
+				model
 			});
 
 			tts_promises.set(ttsToken, tts);

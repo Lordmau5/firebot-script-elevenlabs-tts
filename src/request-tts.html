@@ -18,7 +18,11 @@
 <eos-container header="Subscription Info" class="setting-padtop">
 	<p>
 	<div ng-if="fetchingSubscriptionData === true">
-		<strong><em>Fetching subscription info...</em></strong>
+		<ul class="sub-data">
+			<li><b>Tier:</b> fetching...</li>
+			<li><b>Credits used:</b> fetching...</li>
+			<li><b>Reset date:</b> fetching...</li>
+		</ul>
 	</div>
 	<div ng-if="fetchingSubscriptionData === false">
 		<ul class="sub-data">
@@ -54,7 +58,27 @@
 		cols="40" replace-variables menu-position="under"></textarea>
 </eos-container>
 
-<eos-container header="Use Turbo Model" pad-top="true">
+<eos-container header="Model" pad-top="true">
+	<p>
+		Select which ElevenLabs model to use.
+		<br>
+		As an added bonus: The credits use is <strong>halved</strong> for Turbo and Flash, meaning 1 letter counts as
+		0.5 credits instead of 1 credit.
+		<br>
+		<br>
+		<b>Selected default model:</b> {{default_model}}
+	</p>
+	<ui-select ng-model="effect.model">
+		<ui-select-match placeholder="">{{$select.selected.name}}</ui-select-match>
+		<ui-select-choices repeat="model in models">
+			<div>
+				<strong ng-bind-html="model.name"></strong>
+			</div>
+		</ui-select-choices>
+	</ui-select>
+</eos-container>
+
+<!-- <eos-container header="Use Turbo Model" pad-top="true">
 	<p>
 		Uses ElevenLabs' Turbo v2.5 model instead of the default Multilingual v2.
 		<br>
@@ -65,7 +89,7 @@
 		<input type="checkbox" ng-model="effect.useTurboModel">
 		<div class="control__indicator"></div>
 	</label>
-</eos-container>
+</eos-container> -->
 
 <eos-container header="Stability" pad-top="true">
 	<p>
@@ -96,7 +120,7 @@
 	</rzslider>
 </eos-container>
 
-<eos-container ng-if="!effect.useTurboModel" header="Style Exaggeration" pad-top="true">
+<eos-container ng-if="effect.model.id === 'eleven_multilingual_v2'" header="Style Exaggeration" pad-top="true">
 	<p>
 		High values are recommended if the style of the speech should be exaggerated
 		compared to the uploaded audio. Higher values can lead to more instability
@@ -108,7 +132,7 @@
 	</rzslider>
 </eos-container>
 
-<eos-container ng-if="!effect.useTurboModel" header="Speaker Boost" pad-top="true">
+<eos-container ng-if="effect.model.id === 'eleven_multilingual_v2'" header="Speaker Boost" pad-top="true">
 	<p>
 		Boost the similarity of the synthesized speech
 		and the voice at the cost of some generation speed.
