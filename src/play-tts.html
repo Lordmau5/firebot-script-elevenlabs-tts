@@ -1,6 +1,5 @@
 <eos-container header="TTS Token">
-	<input ng-model="effect.tts_token" type="text" class="form-control" placeholder="Enter TTS Token"
-		replace-variables>
+	<input ng-model="effect.tts_token" type="text" class="form-control" placeholder="Enter TTS Token" replace-variables>
 </eos-container>
 
 <eos-container header="Maximum Duration" pad-top="true">
@@ -17,12 +16,6 @@
 		<input type="checkbox" ng-model="effect.waitForSound">
 		<div class="control__indicator"></div>
 	</label>
-
-	<label class="control-fb control--checkbox"> Delete sound after playback <tooltip
-		text="'Delete the sound after playback is complete.'"></tooltip>
-	<input type="checkbox" ng-model="effect.deleteAfterPlayback">
-	<div class="control__indicator"></div>
-</label>
 </eos-container>
 
 <eos-container header="Volume" pad-top="true">

@@ -16,7 +16,6 @@ interface EffectModel {
 
 	maxSoundLength: number;
 	waitForSound: boolean;
-	deleteAfterPlayback: boolean;
 }
 
 interface OverlayData {
@@ -43,10 +42,6 @@ const effect: EffectType<EffectModel & OverlayData> = {
 	optionsController: ($scope, utilityService: any, backendCommunicator: any, $q: any, $timeout: any) => {
 		if ($scope.effect.volume == null) {
 			$scope.effect.volume = 5;
-		}
-
-		if ($scope.effect.deleteAfterPlayback == null) {
-			$scope.effect.deleteAfterPlayback = true;
 		}
 	},
 	optionsValidator: effect => {
@@ -123,9 +118,8 @@ const effect: EffectType<EffectModel & OverlayData> = {
 		}
 
 		try {
-			const waitPromise = wait(durationMs).then(async function() {
-				if (effect.deleteAfterPlayback)
-					await fs.unlink(data.filepath);
+			const waitPromise = wait(durationMs).then(async function () {
+				await fs.unlink(data.filepath);
 			});
 
 			if (effect.waitForSound) {
