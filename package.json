@@ -13,7 +13,7 @@
 	"author": "Lordmau5",
 	"license": "GNU3",
 	"devDependencies": {
-		"@crowbartools/firebot-custom-scripts-types": "^5.60.1",
+		"@crowbartools/firebot-custom-scripts-types": "^5.63.1",
 		"@stylistic/eslint-plugin": "^1.5.4",
 		"@types/fs-extra": "^11.0.4",
 		"@types/jest": "^29.5.11",
