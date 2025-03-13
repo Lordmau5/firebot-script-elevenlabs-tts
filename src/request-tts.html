@@ -78,18 +78,21 @@
 	</ui-select>
 </eos-container>
 
-<!-- <eos-container header="Use Turbo Model" pad-top="true">
+<eos-container header="Speed" pad-top="true">
 	<p>
-		Uses ElevenLabs' Turbo v2.5 model instead of the default Multilingual v2.
-		<br>
-		As an added bonus: The credits use is <strong>halved</strong> for Turbo, meaning 1 letter counts as 0.5 credits,
-		instead of 1 credit.
+		Controls the speed of the generated speech.
 	</p>
-	<label class="control-fb control--checkbox"> Use Turbo Model
-		<input type="checkbox" ng-model="effect.useTurboModel">
-		<div class="control__indicator"></div>
-	</label>
-</eos-container> -->
+	<p>
+		<strong>Lower</strong> values create slower, more deliberate speech while <strong>higher</strong> values produce
+		faster-paced speech.
+	</p>
+	<p>
+		Extreme values can impact the quality of the generated speech.
+	</p>
+	<rzslider rz-slider-model="effect.speed"
+		rz-slider-options="{floor: 0.7, ceil: 1.2, step: 0.05, precision: 3, hideLimitLabels: true, showSelectionBar: true}">
+	</rzslider>
+</eos-container>
 
 <eos-container header="Stability" pad-top="true">
 	<p>

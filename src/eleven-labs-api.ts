@@ -137,6 +137,7 @@ export default class ElevenLabs {
 		voiceId = 'pNInz6obpgDQGcFmaJgB', // Default voice 'Adam'
 		fileName,
 		textInput,
+		speed = 1.0,
 		stability = 0.5,
 		similarity = 0.75,
 		model = ElevenLabs.getDefaultModel(),
@@ -146,6 +147,7 @@ export default class ElevenLabs {
 		voiceId?: string,
 		fileName: string,
 		textInput: string,
+		speed?: number,
 		stability?: number,
 		similarity?: number,
 		model?: Model,
@@ -174,6 +176,7 @@ export default class ElevenLabs {
 			body: JSON.stringify({
 				text: textInput,
 				voice_settings: {
+					speed,
 					stability,
 					similarity_boost: similarity,
 					style,

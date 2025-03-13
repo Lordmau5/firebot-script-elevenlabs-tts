@@ -24,6 +24,7 @@ interface EffectModel {
 
 	text: string;
 
+	speed: number
 	stability: number;
 	similarity: number;
 	style: number;
@@ -51,6 +52,10 @@ const effect: EffectType<EffectModel> = {
 	},
 	optionsTemplate: template,
 	optionsController: ($scope, utilityService: any, backendCommunicator: any, $q: any, $timeout: any) => {
+		if ($scope.effect.speed == null) {
+			$scope.effect.speed = 1.0;
+		}
+
 		if ($scope.effect.stability == null) {
 			$scope.effect.stability = 0.5;
 		}
@@ -157,6 +162,7 @@ const effect: EffectType<EffectModel> = {
 				voiceId,
 				fileName: mp3Path,
 				textInput: effect.text,
+				speed: effect.speed,
 				stability: effect.stability,
 				similarity: effect.similarity,
 				style: effect.style,
