@@ -78,7 +78,7 @@
 	</ui-select>
 </eos-container>
 
-<eos-container header="Speed" pad-top="true">
+<eos-container ng-if="effect.model.id !== 'eleven_v3'" header="Speed" pad-top="true">
 	<p>
 		Controls the speed of the generated speech.
 	</p>
@@ -94,7 +94,7 @@
 	</rzslider>
 </eos-container>
 
-<eos-container header="Stability" pad-top="true">
+<eos-container ng-if="effect.model.id !== 'eleven_v3'" header="Stability" pad-top="true">
 	<p>
 		<strong>Lower (More variable):</strong> Increasing variability can make speech more expressive
 		with output varying between re-generations. It can also lead to instabilities.
@@ -109,7 +109,7 @@
 	</rzslider>
 </eos-container>
 
-<eos-container header="Similarity" pad-top="true">
+<eos-container ng-if="effect.model.id !== 'eleven_v3'" header="Similarity" pad-top="true">
 	<p>
 		<strong>Lower:</strong> Low values are recommended if background artifacts are present in generated speech.
 	</p>

@@ -114,7 +114,7 @@ const script: Firebot.CustomScript<Params> = {
 		modules.frontendCommunicator.onAsync('elevenlabs-get-subscription-data', async () => {
 			const response = {
 				error: false,
-				subscriptionData: null as ElevenLabsSubscriptionData
+				subscriptionData: null as unknown as ElevenLabsSubscriptionData
 			};
 
 			try {

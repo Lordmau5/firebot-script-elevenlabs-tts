@@ -51,6 +51,11 @@ export interface ElevenLabsVoiceBase {
 	voice_id: string;
 }
 
+export interface ElevenLabsDialogueInput {
+	voice_id: string | undefined;
+	text: string;
+}
+
 interface ElevenLabsVoice extends ElevenLabsVoiceBase {
 	available_for_tiers: string[];
 	fine_tuning: {
@@ -81,6 +86,10 @@ export interface Model {
 
 export const Models = [
 	{
+		id: 'eleven_v3',
+		name: 'Eleven v3 (alpha)',
+	},
+	{
 		id: 'eleven_multilingual_v2',
 		name: 'Multilingual v2',
 	},
@@ -94,10 +103,12 @@ export const Models = [
 	},
 ] as Model[];
 
+export const CachedVoices = new Map<string, ElevenLabsVoice>();
+
 export default class ElevenLabs {
 	private static _instance: ElevenLabs;
 
-	private apiKey: string;
+	private apiKey: string = '';
 
 	private constructor() { }
 
@@ -117,6 +128,16 @@ export default class ElevenLabs {
 
 			return;
 		}
+	}
+
+	public static getModelByID(id: string): Model {
+		for (const model of Models) {
+			if (model.id === id) {
+				return model;
+			}
+		}
+
+		return Models[0];
 	}
 
 	public static getModelByName(name: string): Model {
@@ -198,6 +219,67 @@ export default class ElevenLabs {
 			};
 		}
 		catch (err) {
+			// @ts-ignore: Printing error / JSON object
+			modules.logger.error(err);
+			throw err;
+		}
+	}
+
+	/* ElevenLabs v3 */
+	public async textToDialogue({
+		fileName,
+		inputs,
+		model = ElevenLabs.getModelByID('eleven_v3'),
+		stability = '0.5'
+	}: {
+		fileName: string,
+		inputs: ElevenLabsDialogueInput[],
+		model?: Model,
+		stability?: string
+	}) {
+		if (!fileName) {
+			modules.logger.error('Missing parameter {fileName}');
+
+			return;
+		}
+		else if (!inputs?.length) {
+			modules.logger.error('Missing or empty parameter {inputs}');
+
+			return;
+		}
+		else if (stability !== '0.0' && stability !== '0.5' && stability !== '1.0') {
+			modules.logger.error('Stability has to be specifically 0.0, 0.5 or 1.0. {stability} provided');
+
+			return;
+		}
+
+		const ttsUrl = `${elevenLabsAPIV1}/text-to-dialogue`;
+		const options = {
+			method: 'POST',
+			headers: {
+				'xi-api-key': this.apiKey,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				inputs,
+				model_id: model.id,
+				stability
+			})
+		};
+
+		const writeStream = fs.createWriteStream(fileName);
+
+		try {
+			const response = await fetch(ttsUrl, options);
+			await pipeline(response.body as any, writeStream);
+
+			return {
+				status: 'ok',
+				fileName: fileName
+			};
+		}
+		catch (err) {
+			// @ts-ignore: Printing error / JSON object
 			modules.logger.error(err);
 			throw err;
 		}
@@ -263,9 +345,15 @@ export default class ElevenLabs {
 
 			this.sortVoices(voices);
 
+			CachedVoices.clear();
+			for (const voice of voices) {
+				CachedVoices.set(voice.voice_id, voice);
+			}
+
 			return voices;
 		}
 		catch (err) {
+			// @ts-ignore: Printing error / JSON object
 			modules.logger.error(err);
 			throw err;
 		}
@@ -303,6 +391,7 @@ export default class ElevenLabs {
 			return subData;
 		}
 		catch (err) {
+			// @ts-ignore: Printing error / JSON object
 			modules.logger.error(err);
 			throw err;
 		}
