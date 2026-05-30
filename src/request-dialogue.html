@@ -92,6 +92,15 @@
 		options="{ '0.0': 'Creative (0.0)', '0.5': 'Natural (0.5)', '1.0': 'Robust (1.0)' }" placeholder="0.5" />
 </eos-container>
 
+<eos-container header="Pronunciation Dictionary" pad-top="true">
+	<p>
+		Optional. The ID of an ElevenLabs pronunciation dictionary to apply to this dialogue.
+		Leave blank to use none. The latest version of the dictionary is always used.
+	</p>
+	<firebot-input model="effect.pronunciationDictionaryId" input-type="string" disable-variables="true"
+		placeholder-text="Enter a pronunciation dictionary ID (optional)"></firebot-input>
+</eos-container>
+
 <eos-container header="Voice Matches" pad-top="true">
 	<p>
 		The names are separated by a comma (,) so you could do "John, James, Jeremy" and it would allow you to do TTS

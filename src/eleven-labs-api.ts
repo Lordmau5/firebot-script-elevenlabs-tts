@@ -56,6 +56,11 @@ export interface ElevenLabsDialogueInput {
 	text: string;
 }
 
+export interface ElevenLabsPronunciationDictionaryLocator {
+	pronunciation_dictionary_id: string;
+	version_id?: string;
+}
+
 interface ElevenLabsVoice extends ElevenLabsVoiceBase {
 	available_for_tiers: string[];
 	fine_tuning: {
@@ -163,7 +168,8 @@ export default class ElevenLabs {
 		similarity = 0.75,
 		model = ElevenLabs.getDefaultModel(),
 		style = 0,
-		speakerBoost = false
+		speakerBoost = false,
+		pronunciationDictionaryLocators
 	}: {
 		voiceId?: string,
 		fileName: string,
@@ -173,7 +179,8 @@ export default class ElevenLabs {
 		similarity?: number,
 		model?: Model,
 		style?: number,
-		speakerBoost?: boolean
+		speakerBoost?: boolean,
+		pronunciationDictionaryLocators?: ElevenLabsPronunciationDictionaryLocator[]
 	}) {
 		if (!fileName) {
 			modules.logger.error('Missing parameter {fileName}');
@@ -203,7 +210,10 @@ export default class ElevenLabs {
 					style,
 					use_speaker_boost: speakerBoost
 				},
-				model_id: model.id
+				model_id: model.id,
+				...(pronunciationDictionaryLocators?.length
+					? { pronunciation_dictionary_locators: pronunciationDictionaryLocators }
+					: {})
 			})
 		};
 
@@ -230,12 +240,14 @@ export default class ElevenLabs {
 		fileName,
 		inputs,
 		model = ElevenLabs.getModelByID('eleven_v3'),
-		stability = '0.5'
+		stability = '0.5',
+		pronunciationDictionaryLocators
 	}: {
 		fileName: string,
 		inputs: ElevenLabsDialogueInput[],
 		model?: Model,
-		stability?: string
+		stability?: string,
+		pronunciationDictionaryLocators?: ElevenLabsPronunciationDictionaryLocator[]
 	}) {
 		if (!fileName) {
 			modules.logger.error('Missing parameter {fileName}');
@@ -263,7 +275,10 @@ export default class ElevenLabs {
 			body: JSON.stringify({
 				inputs,
 				model_id: model.id,
-				stability
+				stability,
+				...(pronunciationDictionaryLocators?.length
+					? { pronunciation_dictionary_locators: pronunciationDictionaryLocators }
+					: {})
 			})
 		};
 

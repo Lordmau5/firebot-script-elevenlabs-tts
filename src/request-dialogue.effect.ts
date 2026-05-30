@@ -38,6 +38,8 @@ interface EffectModel {
 
 	stability: string;
 
+	pronunciationDictionaryId: string;
+
 	waitForGeneration: boolean;
 }
 
@@ -65,6 +67,10 @@ const effect: EffectType<EffectModel> = {
 
 		if ($scope.effect.splitText == null) {
 			$scope.effect.splitText = '--';
+		}
+
+		if ($scope.effect.pronunciationDictionaryId == null) {
+			$scope.effect.pronunciationDictionaryId = '';
 		}
 
 		if ($scope.effect.voices == null) {
@@ -249,12 +255,18 @@ const effect: EffectType<EffectModel> = {
 				}
 			}
 
+			const dictId = effect.pronunciationDictionaryId?.trim();
+			const pronunciationDictionaryLocators = dictId
+				? [{ pronunciation_dictionary_id: dictId }]
+				: undefined;
+
 			const tts = api.textToDialogue({
 				fileName: mp3Path,
 				inputs,
 				// For now this is only supported on the v3 model.
 				model: ElevenLabs.getModelByID('eleven_v3'),
-				stability: effect.stability
+				stability: effect.stability,
+				pronunciationDictionaryLocators
 			});
 
 			tts_promises.set(ttsToken, tts);
