@@ -31,6 +31,8 @@ interface EffectModel {
 	model: Model;
 	speakerBoost: boolean;
 
+	pronunciationDictionaryId: string;
+
 	waitForGeneration: boolean;
 }
 
@@ -66,6 +68,10 @@ const effect: EffectType<EffectModel> = {
 
 		if ($scope.effect.style == null) {
 			$scope.effect.style = 0;
+		}
+
+		if ($scope.effect.pronunciationDictionaryId == null) {
+			$scope.effect.pronunciationDictionaryId = '';
 		}
 
 		const models = backendCommunicator.fireEventSync('elevenlabs-get-models');
@@ -158,6 +164,11 @@ const effect: EffectType<EffectModel> = {
 		}
 
 		try {
+			const dictId = effect.pronunciationDictionaryId?.trim();
+			const pronunciationDictionaryLocators = dictId
+				? [{ pronunciation_dictionary_id: dictId }]
+				: undefined;
+
 			const tts = api.textToSpeech({
 				voiceId,
 				fileName: mp3Path,
@@ -167,7 +178,8 @@ const effect: EffectType<EffectModel> = {
 				similarity: effect.similarity,
 				style: effect.style,
 				speakerBoost: effect.speakerBoost,
-				model
+				model,
+				pronunciationDictionaryLocators
 			});
 
 			tts_promises.set(ttsToken, tts);

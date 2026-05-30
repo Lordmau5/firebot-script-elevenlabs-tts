@@ -146,6 +146,18 @@
 	</label>
 </eos-container>
 
+<eos-container header="Pronunciation Dictionary" pad-top="true">
+	<p>
+		Optional. The ID of an ElevenLabs pronunciation dictionary to apply to this TTS request.
+		Leave blank to use none. The latest version of the dictionary is always used.
+		<br>
+		Note: phoneme-based rules only work on the Flash v2 / Monolingual v1 models, while
+		alias-based rules work on all models.
+	</p>
+	<firebot-input model="effect.pronunciationDictionaryId" input-type="string" disable-variables="true"
+		placeholder-text="Enter a pronunciation dictionary ID (optional)"></firebot-input>
+</eos-container>
+
 <eos-container header="Wait For Generation" pad-top="true">
 	<p>
 		Waits for the generation to finish before continuing with other effects.
