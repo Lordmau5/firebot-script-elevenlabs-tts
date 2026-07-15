@@ -1,0 +1,7 @@
+elevenlabs tts request dialogue, max of 10 voices, new version
+
+Example that doesn't play:
+
+Joker: [crying]
+
+Expects at least 1 character

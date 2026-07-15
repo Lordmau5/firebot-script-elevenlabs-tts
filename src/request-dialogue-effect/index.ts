@@ -1,24 +1,15 @@
-import ElevenLabs, {
+import {
 	ElevenLabsSubscriptionData,
 	ElevenLabsDialogueInput,
-	Model
-} from './eleven-labs-api';
-import {
-	v4 as uuid
-} from 'uuid';
+	Model,
+	ElevenLabsVoiceBase,
+	elevenLabs
+} from '../eleven-labs-api';
 import * as fs from 'fs-extra';
 
-import {
-	Effects
-} from '@crowbartools/firebot-custom-scripts-types/types/effects';
-import template from './request-dialogue.html';
-import {
-	modules, parameters, tts_promises
-} from './main';
-import EffectType = Effects.EffectType;
-import {
-	ElevenLabsVoiceBase
-} from './eleven-labs-api';
+import template from './template.html';
+import firebot, { EffectType } from '@crowbartools/firebot-types';
+import path from 'path';
 
 interface VoiceMapElement {
 	voice_id: string;
@@ -60,7 +51,7 @@ const effect: EffectType<EffectModel> = {
 		}]
 	},
 	optionsTemplate: template,
-	optionsController: ($scope, utilityService: any, backendCommunicator: any, $q: any, $timeout: any) => {
+	optionsController: async ($scope, utilityService: any, backendCommunicator: any, $q: any, $timeout: any) => {
 		if ($scope.effect.stability == null) {
 			$scope.effect.stability = '0.5';
 		}
@@ -77,16 +68,16 @@ const effect: EffectType<EffectModel> = {
 			$scope.effect.voices = {};
 		}
 
-		const models = backendCommunicator.fireEventSync('elevenlabs-get-models');
+		const models = await backendCommunicator.fireEventAsync('lordmau5:elevenlabs-tts:get-models');
 		$scope.models = models;
 
 		if ($scope.effect.model == null) {
 			$scope.effect.model = models[0];
 		}
 
-		$scope.default_model = backendCommunicator.fireEventSync('elevenlabs-get-default-model-name');
+		$scope.default_model = await backendCommunicator.fireEventAsync('lordmau5:elevenlabs-tts:get-default-model-name');
 
-		$q.when(backendCommunicator.fireEventAsync('elevenlabs-get-voices'))
+		$q.when(backendCommunicator.fireEventAsync('lordmau5:elevenlabs-tts:get-voices'))
 			.then(({
 				error, voices
 			}: { error: boolean, voices: ElevenLabsVoiceBase[] }) => {
@@ -129,7 +120,7 @@ const effect: EffectType<EffectModel> = {
 		};
 
 		$scope.fetchingSubscriptionData = true;
-		$q.when(backendCommunicator.fireEventAsync('elevenlabs-get-subscription-data'))
+		$q.when(backendCommunicator.fireEventAsync('lordmau5:elevenlabs-tts:get-subscription-data'))
 			.then(({
 				error, subscriptionData
 			}: { error: boolean, subscriptionData: ElevenLabsSubscriptionData }) => {
@@ -156,44 +147,40 @@ const effect: EffectType<EffectModel> = {
 
 		let model: Model = effect.model;
 		if (!model?.id || model.is_default) {
-			model = ElevenLabs.getDefaultModel();
-		}
-
-		if (!parameters.api_key.length) {
-			modules.logger.error('No API key specified.');
-
-			return false;
+			model = elevenLabs.getDefaultModel();
 		}
 
 		if (!effect.text.length) {
-			modules.logger.error('No text specified.');
+			firebot.logger.error('No text specified.');
 
 			return false;
 		}
 
-		const api = ElevenLabs.instance;
-		api.setup(parameters.api_key);
+		if (!elevenLabs.setup()) {
+			return false;
+		}
 
-		const ttsToken = uuid();
+		const ttsToken = crypto.randomUUID();
 
 		let mp3Path = undefined;
 		try {
-			const ELEVENLABS_TMP_DIR = modules.path.join(SCRIPTS_DIR, '..', 'tmp', 'elevenlabs');
+			const ELEVENLABS_TMP_DIR = path.join(firebot.storage.path, '..', '..', 'tmp', 'elevenlabs');
 
 			if (!(await fs.pathExists(ELEVENLABS_TMP_DIR))) {
 				await fs.mkdirp(ELEVENLABS_TMP_DIR);
 			}
 
-			mp3Path = modules.path.join(ELEVENLABS_TMP_DIR, `${ttsToken}.mp3`);
+			mp3Path = path.join(ELEVENLABS_TMP_DIR, `${ttsToken}.mp3`);
 		}
 		catch (err) {
-			modules.logger.error('Unable to prepare temp folder', err);
+			firebot.logger.error('Unable to prepare temp folder', err);
 
 			return false;
 		}
 
 		try {
 			const inputs = [] as ElevenLabsDialogueInput[];
+			// TODO: Only allow up to 10 individual voices, otherwise ElevenLabs' Dialogue feature throws an error
 			const splits = effect.text.split(` ${effect.splitText} `);
 
 			const getRandomVoice = () => {
@@ -260,16 +247,16 @@ const effect: EffectType<EffectModel> = {
 				? [{ pronunciation_dictionary_id: dictId }]
 				: undefined;
 
-			const tts = api.textToDialogue({
+			const tts = elevenLabs.textToDialogue({
 				fileName: mp3Path,
 				inputs,
 				// For now this is only supported on the v3 model.
-				model: ElevenLabs.getModelByID('eleven_v3'),
+				model: elevenLabs.getModelByID('eleven_v3'),
 				stability: effect.stability,
 				pronunciationDictionaryLocators
 			});
 
-			tts_promises.set(ttsToken, tts);
+			elevenLabs.tts_promises.set(ttsToken, tts);
 
 			if (effect.waitForGeneration) {
 				await tts;
@@ -283,7 +270,7 @@ const effect: EffectType<EffectModel> = {
 			};
 		}
 		catch (err) {
-			modules.logger.error('Unable to save TTS', err);
+			firebot.logger.error('Unable to save TTS', err);
 
 			return false;
 		}
