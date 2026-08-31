@@ -1,8 +1,5 @@
+import firebot, { FrontendListener } from '@crowbartools/firebot-types';
 import * as fs from 'fs-extra';
-import {
-	modules,
-	parameters
-} from './main';
 import { pipeline } from 'stream/promises';
 
 const elevenLabsAPIV1 = 'https://api.elevenlabs.io/v1';
@@ -110,32 +107,110 @@ export const Models = [
 
 export const CachedVoices = new Map<string, ElevenLabsVoice>();
 
-export default class ElevenLabs {
-	private static _instance: ElevenLabs;
-
+class ElevenLabs {
 	private apiKey: string = '';
 
-	private constructor() { }
+	public tts_promises: Map<string, Promise<any>> = new Map();
 
-	public static get instance() {
-		if (!ElevenLabs._instance) {
-			ElevenLabs._instance = new ElevenLabs();
-		}
+	public frontendListeners: FrontendListener[];
 
-		return ElevenLabs._instance;
+	public constructor() {
+		this.frontendListeners = [
+			{
+				eventName: 'lordmau5:elevenlabs-tts:get-models',
+				handler: async () => {
+					const models = [...Models];
+
+					const default_model = this.getDefaultModel();
+					models.unshift({
+						name: `Default`,
+						id: default_model.id,
+						is_default: true
+					});
+
+					return models;
+				},
+				useAsync: true
+			},
+			{
+				eventName: 'lordmau5:elevenlabs-tts:get-default-model-name',
+				handler: async () => {
+					return this.getDefaultModel().name;
+				},
+				useAsync: true
+			},
+			{
+				eventName: 'lordmau5:elevenlabs-tts:get-voices',
+				handler: async () => {
+					const response = {
+						error: false,
+						voices: [] as ElevenLabsVoiceBase[]
+					};
+
+					try {
+						const {
+							show_premade_voices
+						} = (firebot.parameters.getAll() as Params);
+
+						this.setup();
+
+						const voices = await this.fetchVoices({
+							show_premade_voices
+						});
+
+						response.voices = voices;
+					}
+					catch (err) {
+						firebot.logger.error('Unable to fetch voices', err);
+						response.error = true;
+					}
+
+					return response;
+				},
+				useAsync: true
+			},
+			{
+				eventName: 'lordmau5:elevenlabs-tts:get-subscription-data',
+				handler: async () => {
+					const response = {
+						error: false,
+						subscriptionData: null as unknown as ElevenLabsSubscriptionData
+					};
+
+					try {
+						this.setup();
+
+						response.subscriptionData = await this.fetchSubscriptionData();
+					}
+					catch (err) {
+						firebot.logger.error('Unable to fetch voices', err);
+						response.error = true;
+					}
+
+					return response;
+				},
+				useAsync: true
+			}
+		];
 	}
 
-	public setup(apiKey: string = '') {
-		this.apiKey = apiKey;
+	public setup(): boolean {
+		const {
+			api_key
+		} = (firebot.parameters.getAll() as Params);
+
+		this.apiKey = api_key;
 
 		if (this.apiKey === '') {
-			modules.logger.error('Missing API key');
+			firebot.logger.error('Missing API key');
 
-			return;
+			return false;
 		}
+
+		return true;
 	}
 
-	public static getModelByID(id: string): Model {
+	public getModelByID(id: string): Model {
 		for (const model of Models) {
 			if (model.id === id) {
 				return model;
@@ -145,7 +220,7 @@ export default class ElevenLabs {
 		return Models[0];
 	}
 
-	public static getModelByName(name: string): Model {
+	public getModelByName(name: string): Model {
 		for (const model of Models) {
 			if (model.name === name) {
 				return model;
@@ -155,8 +230,12 @@ export default class ElevenLabs {
 		return Models[0];
 	}
 
-	public static getDefaultModel(): Model {
-		return this.getModelByName(parameters.default_model);
+	public getDefaultModel(): Model {
+		const {
+			default_model
+		} = (firebot.parameters.getAll() as Params);
+
+		return this.getModelByName(default_model);
 	}
 
 	public async textToSpeech({
@@ -166,7 +245,7 @@ export default class ElevenLabs {
 		speed = 1.0,
 		stability = 0.5,
 		similarity = 0.75,
-		model = ElevenLabs.getDefaultModel(),
+		model = this.getDefaultModel(),
 		style = 0,
 		speakerBoost = false,
 		pronunciationDictionaryLocators
@@ -183,12 +262,12 @@ export default class ElevenLabs {
 		pronunciationDictionaryLocators?: ElevenLabsPronunciationDictionaryLocator[]
 	}) {
 		if (!fileName) {
-			modules.logger.error('Missing parameter {fileName}');
+			firebot.logger.error('Missing parameter {fileName}');
 
 			return;
 		}
 		else if (!textInput) {
-			modules.logger.error('Missing parameter {textInput}');
+			firebot.logger.error('Missing parameter {textInput}');
 
 			return;
 		}
@@ -228,9 +307,8 @@ export default class ElevenLabs {
 				fileName: fileName
 			};
 		}
-		catch (err) {
-			// @ts-ignore: Printing error / JSON object
-			modules.logger.error(err);
+		catch (err: any) {
+			firebot.logger.error(err);
 			throw err;
 		}
 	}
@@ -239,7 +317,7 @@ export default class ElevenLabs {
 	public async textToDialogue({
 		fileName,
 		inputs,
-		model = ElevenLabs.getModelByID('eleven_v3'),
+		model = this.getModelByID('eleven_v3'),
 		stability = '0.5',
 		pronunciationDictionaryLocators
 	}: {
@@ -250,17 +328,17 @@ export default class ElevenLabs {
 		pronunciationDictionaryLocators?: ElevenLabsPronunciationDictionaryLocator[]
 	}) {
 		if (!fileName) {
-			modules.logger.error('Missing parameter {fileName}');
+			firebot.logger.error('Missing parameter {fileName}');
 
 			return;
 		}
 		else if (!inputs?.length) {
-			modules.logger.error('Missing or empty parameter {inputs}');
+			firebot.logger.error('Missing or empty parameter {inputs}');
 
 			return;
 		}
 		else if (stability !== '0.0' && stability !== '0.5' && stability !== '1.0') {
-			modules.logger.error('Stability has to be specifically 0.0, 0.5 or 1.0. {stability} provided');
+			firebot.logger.error('Stability has to be specifically 0.0, 0.5 or 1.0. {stability} provided');
 
 			return;
 		}
@@ -293,9 +371,8 @@ export default class ElevenLabs {
 				fileName: fileName
 			};
 		}
-		catch (err) {
-			// @ts-ignore: Printing error / JSON object
-			modules.logger.error(err);
+		catch (err: any) {
+			firebot.logger.error(err);
 			throw err;
 		}
 	}
@@ -367,9 +444,8 @@ export default class ElevenLabs {
 
 			return voices;
 		}
-		catch (err) {
-			// @ts-ignore: Printing error / JSON object
-			modules.logger.error(err);
+		catch (err: any) {
+			firebot.logger.error(err);
 			throw err;
 		}
 	}
@@ -405,10 +481,11 @@ export default class ElevenLabs {
 
 			return subData;
 		}
-		catch (err) {
-			// @ts-ignore: Printing error / JSON object
-			modules.logger.error(err);
+		catch (err: any) {
+			firebot.logger.error(err);
 			throw err;
 		}
 	}
 }
+
+export const elevenLabs = new ElevenLabs();
