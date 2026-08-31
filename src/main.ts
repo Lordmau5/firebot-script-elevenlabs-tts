@@ -14,7 +14,7 @@ const plugin: Plugin<Params> = {
 		name: 'ElevenLabs TTS',
 		description: 'A custom script that allows ElevenLabs TTS to be used in Firebot',
 		author: 'Lordmau5',
-		version: '1.5.0',
+		version: '1.6.0',
 		repo: 'https://github.com/Lordmau5/firebot-script-elevenlabs-tts',
 		icon: {
 			type: "font-awesome",
