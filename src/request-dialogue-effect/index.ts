@@ -180,13 +180,23 @@ const effect: EffectType<EffectModel> = {
 
 		try {
 			const inputs = [] as ElevenLabsDialogueInput[];
-			// TODO: Only allow up to 10 individual voices, otherwise ElevenLabs' Dialogue feature throws an error
 			const splits = effect.text.split(` ${effect.splitText} `);
 
+			const uniqueVoices = new Set<VoiceMapElement>();
+
 			const getRandomVoice = () => {
-				return Object.values(effect.voices)[
+				// If 10 voices have been used in this dialogue return a random one from that set, otherwise pick a new one from the list of voices
+				if (uniqueVoices.size >= 10) {
+					return [...uniqueVoices][Math.floor(Math.random() * uniqueVoices.size)];
+				}
+
+				const voice = Object.values(effect.voices)[
 					Math.floor(Math.random() * Object.values(effect.voices).length)
 				];
+
+				uniqueVoices.add(voice);
+
+				return voice;
 			}
 
 			for (const _text of splits) {
@@ -210,8 +220,10 @@ const effect: EffectType<EffectModel> = {
 				if (foundVoice) {
 					inputs.push({
 						voice_id: foundVoice.voice_id,
-						text: messageParts.join(":").trim()
+						text: `${messageParts.join(":").trim()}.`
 					});
+
+					uniqueVoices.add(foundVoice);
 				}
 				// Unmatched voice
 				else {
@@ -225,7 +237,7 @@ const effect: EffectType<EffectModel> = {
 					else {
 						inputs.push({
 							voice_id: getRandomVoice().voice_id,
-							text
+							text: `${text}.`
 						});
 					}
 				}
