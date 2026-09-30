@@ -250,8 +250,7 @@ const effect: EffectType<EffectModel> = {
 			const tts = elevenLabs.textToDialogue({
 				fileName: mp3Path,
 				inputs,
-				// For now this is only supported on the v3 model.
-				model: elevenLabs.getModelByID('eleven_v3'),
+				model: elevenLabs.getModelByID('eleven_v4'),
 				stability: effect.stability,
 				pronunciationDictionaryLocators
 			});

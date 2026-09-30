@@ -88,6 +88,14 @@ export interface Model {
 
 export const Models = [
 	{
+		id: 'eleven_v4',
+		name: 'Eleven v4',
+	},
+	{
+		id: 'eleven_v4_turbo',
+		name: 'Eleven v4 Turbo',
+	},
+	{
 		id: 'eleven_v3',
 		name: 'Eleven v3 (alpha)',
 	},
@@ -317,7 +325,7 @@ class ElevenLabs {
 	public async textToDialogue({
 		fileName,
 		inputs,
-		model = this.getModelByID('eleven_v3'),
+		model = this.getModelByID('eleven_v4'),
 		stability = '0.5',
 		pronunciationDictionaryLocators
 	}: {
